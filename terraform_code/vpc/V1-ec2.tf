@@ -116,9 +116,19 @@ resource "aws_route_table_association" "TIAA-rta-public-subnet-02" {
   route_table_id = aws_route_table.TIAA-public-rt.id
 }
 
+# ---------------------------------------EKS ------------------------------------
 
+module "sgs" {
+    source = "../sg_eks"
+    vpc_id     =     aws_vpc.TIAA-vpc.id
+ }
 
-
+  module "eks" {
+       source = "../eks"
+       vpc_id     =     aws_vpc.TIAA-vpc.id
+       subnet_ids = [aws_subnet.TIAA-public-subnet-01.id,aws_subnet.TIAA-public-subnet-02.id]
+       sg_ids = module.sgs.security_group_public
+ }
 
 
 
