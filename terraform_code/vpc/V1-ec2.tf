@@ -4,16 +4,21 @@ provider "aws" {
 
 resource "aws_instance" "demo-server" {
   ami = "ami-03f4878755434977f"
-  instance_type = "t2.micro"
+  instance_type = "t3.medium"
   key_name = "Key"
   vpc_security_group_ids = [ aws_security_group.demo-sg.id ]
   subnet_id = aws_subnet.TIAA-public-subnet-01.id
-
-  for_each = toset(["Jenkins-master" , "build-slave" , "ansible"])  //create 3 instances
-
-  tags = {
-    Name = "${each.key}"
+  user_data = file("./jenkins-server.sh")    # this is the script that will be executed during the creation of the instance
+  
+  root_block_device {
+    volume_size = 20
   }
+  tags = {
+    Name = "Master"
+  }
+
+  # depends_on = [
+  #   ]  
 }
 
 resource "aws_security_group" "demo-sg" {
@@ -118,17 +123,17 @@ resource "aws_route_table_association" "TIAA-rta-public-subnet-02" {
 
 # ---------------------------------------EKS ------------------------------------
 
-module "sgs" {
-    source = "../sg_eks"
-    vpc_id     =     aws_vpc.TIAA-vpc.id
- }
+# module "sgs" {
+#     source = "../sg_eks"
+#     vpc_id     =     aws_vpc.TIAA-vpc.id
+#  }
 
-  module "eks" {
-       source = "../eks"
-       vpc_id     =     aws_vpc.TIAA-vpc.id
-       subnet_ids = [aws_subnet.TIAA-public-subnet-01.id,aws_subnet.TIAA-public-subnet-02.id]
-       sg_ids = module.sgs.security_group_public
- }
+#   module "eks" {
+#        source = "../eks"
+#        vpc_id     =     aws_vpc.TIAA-vpc.id
+#        subnet_ids = [aws_subnet.TIAA-public-subnet-01.id,aws_subnet.TIAA-public-subnet-02.id]
+#        sg_ids = module.sgs.security_group_public
+#  }
 
 
 
